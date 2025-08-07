@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three Category Data Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .diagram-container {
+            position: relative;
+            width: 600px;
+            height: 520px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: white;
+        }
+        
+        .input-section {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .input-column {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .button-column {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .percentage-value {
+            font-weight: bold;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            width: 60px;
+        }
+        
+        .input-with-percent {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .input-with-percent input {
+            flex: 1;
+        }
+        
+        .axis-label {
+            position: absolute;
+            font-weight: bold;
+        }
+        
+        .category-label {
+            position: absolute;
+            font-weight: bold;
+            font-size: 14pt;
+            border: none;
+            background: transparent;
+        }
+        
+        .data-point {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        
+        .confidence-point {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+        }
+        
+        .mouse-position-box {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            width: 100%;
+        }
+        
+        .mouse-position-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .mouse-position-name {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .mouse-position-value {
+            width: 90px;
+            text-align: right;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .confidence-controls {
+            margin-top: 10px;
+        }
+        
+        .confidence-controls select {
+            margin-bottom: 10px;
+        }
+
+        /* Color palette selector styles */
+        .palette-selector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .palette-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .palette {
+            display: flex;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 30px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .palette-main {
+            display: flex;
+            width: 80px;
+            transition: width 0.3s ease;
+        }
+
+        .palette-color {
+            height: 100%;
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .palette:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .palette:hover .palette-color {
+            transform: scaleY(1.2);
+        }
+
+        .palette.selected {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .palette.selected .palette-main {
+            width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .diagram-container {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 1/1;
+            }
+            .input-section {
+                flex-direction: column;
+            }
+            .button-column {
+                width: 100%;
+            }
+            .palette-main {
+                width: 60px;
+            }
+            .palette.selected .palette-main {
+                width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Three Category Data Analysis</h1>
+    
+    <div class="container">
+        <div>
+            <div class="diagram-container" id="diagram">
+                <!-- Triangle and labels will be drawn here by JavaScript -->
+            </div>
+            
+            <div class="palette-selector">
+                <span>Select color palette:</span>
+                <div class="palette-options">
+                    <div class="palette selected" data-palette="0">
+                        <div class="palette-main">
+                            <div class="palette-color" style="background-color: #FF0000;"></div>
+                            <div class="palette-color" style="background-color: #00CC00;"></div>
+                            <div class="palette-color" style="background-color: #0066FF;"></div>
+                        </div>
+                    </div>
+                    <div class="palette" data-palette="1">
+                        <div class="palette-main">
+                            <div class="palette-color" style="background-color: #DC267F;"></div>
+                            <div class="palette-color" style="background-color: #FFB000;"></div>
+                            <div class="palette-color" style="background-color: #0066FF;"></div>
+                        </div>
+                    </div>
+                    <div class="palette" data-palette="2">
+                        <div class="palette-main">
+                            <div class="palette-color" style="background-color: #CC33FF;"></div>
+                            <div class="palette-color" style="background-color: #332288;"></div>
+                            <div class="palette-color" style="background-color: #88CCEE;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-column">
+                <div class="form-group">
+                    <label for="total">Total number (n):</label>
+                    <input type="number" id="total" min="0" step="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="category1-name" style="color: #FF0000;">1st Category Name:</label>
+                    <input type="text" id="category1-name" style="color: #FF0000; font-weight: bold;">
+                    <div class="input-with-percent">
+                        <input type="number" id="category1-value" min="0" step="1" placeholder="Count">
+                        <div class="percentage-value" id="category1-percent">0%</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category2-name" style="color: #00CC00;">2nd Category Name:</label>
+                    <input type="text" id="category2-name" style="color: #00CC00; font-weight: bold;">
+                    <div class="input-with-percent">
+                        <input type="number" id="category2-value" min="0" step="1" placeholder="Count">
+                        <div class="percentage-value" id="category2-percent">0%</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category3-name" style="color: #0066FF;">3rd Category Name:</label>
+                    <input type="text" id="category3-name" style="color: #0066FF; font-weight: bold;">
+                    <div class="input-with-percent">
+                        <input type="number" id="category3-value" min="0" step="1" placeholder="Count" readonly>
+                        <div class="percentage-value" id="category3-percent">0%</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="point-color">Point Color:</label>
+                    <select id="point-color">
+                        <option value="#FF0000">Red</option>
+                        <option value="#00CC00">Green</option>
+                        <option value="#0066FF">Blue</option>
+                        <option value="#FFB000">Orange</option>
+                        <option value="#DC267F">Pink</option>
+                        <option value="#332288">Navy</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="button-column">
+                <button id="plot-btn">Plot Data</button>
+                <button id="clear-btn">Clear Data</button>
+                <button id="clear-graph-btn">Clear Graph</button>
+                
+                <div class="mouse-position-box">
+                    <h3>Mouse Position</h3>
+                    <div class="mouse-position-row">
+                        <span id="cat1-display" class="mouse-position-name" style="color: #FF0000;">Category 1</span>
+                        <span class="mouse-position-value" id="mouse-cat1">0%</span>
+                    </div>
+                    <div class="mouse-position-row">
+                        <span id="cat2-display" class="mouse-position-name" style="color: #00CC00;">Category 2</span>
+                        <span class="mouse-position-value" id="mouse-cat2">0%</span>
+                    </div>
+                    <div class="mouse-position-row">
+                        <span id="cat3-display" class="mouse-position-name" style="color: #0066FF;">Category 3</span>
+                        <span class="mouse-position-value" id="mouse-cat3">0%</span>
+                    </div>
+                </div>
+                
+                <div class="form-group confidence-controls">
+                    <label for="confidence-level">Confidence Interval:</label>
+                    <select id="confidence-level">
+                        <option value="90">90%</option>
+                        <option value="95" selected>95%</option>
+                        <option value="99">99%</option>
+                    </select>
+                    <button id="draw-confidence-btn">Draw Confidence Region</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Diagram coordinates
+        const Ax = 100, Ay = 446;
+        const Bx = 300, By = 100;
+        const Cx = 500, Cy = 446;
+
+        var B50x=400, B50y=273;
+        var A50x=200, A50y=273;
+        var C50x=300, C50y=446;
+
+        var B75x=350, B75y=186;
+        var A75x=150, A75y=360;
+        var C75x=400, C75y=446;
+
+        var B25x=450, B25y=360;
+        var A25x=250, A25y=186;
+        var C25x=200, C25y=446;
+
+        // Store original state for reset
+        let originalDiagramHTML = '';
+        
+        // Define color palettes
+        const colorPalettes = [
+            ['#FF0000', '#00CC00', '#0066FF'],  // Original RGB palette
+            ['#DC267F', '#FFB000', '#0066FF'],   // Colorblind-friendly palette
+            ['#CC33FF', '#332288', '#88CCEE']    // Purple/blue palette
+        ];
+        
+        // Current colors for categories
+        let categoryColors = {
+            1: '#FF0000', // Red for category 1
+            2: '#00CC00', // Green for category 2
+            3: '#0066FF'  // Blue for category 3
+        };
+        
+        // Initialize the diagram
+        function initDiagram() {
+            const diagram = document.getElementById('diagram');
+            originalDiagramHTML = diagram.innerHTML;
+            
+            // Draw the main triangle
+            drawLine(diagram, Ax, Ay, Bx, By, 'black', 1);
+            drawLine(diagram, Ax, Ay, Cx, Cy, 'black', 1);
+            drawLine(diagram, Bx + 1, By, Cx, Cy, 'black', 1);
+            
+            // Draw axis labels
+            drawAxisLabels(diagram);
+            
+            // Initialize palette selection
+            initPaletteSelection();
+            
+            // Set up event listeners
+            setupEventListeners();
+        }
+        
+        // Initialize palette selection
+        function initPaletteSelection() {
+            document.querySelectorAll('.palette').forEach(palette => {
+                palette.addEventListener('click', function() {
+                    const paletteIndex = parseInt(this.getAttribute('data-palette'));
+                    const selectedPalette = colorPalettes[paletteIndex];
+                    
+                    // Update selected state
+                    document.querySelectorAll('.palette').forEach(p => {
+                        p.classList.remove('selected');
+                        p.querySelector('.palette-main').style.width = '80px';
+                    });
+                    this.classList.add('selected');
+                    this.querySelector('.palette-main').style.width = '120px';
+                    
+                    // Update category colors
+                    categoryColors = {
+                        1: selectedPalette[0],
+                        2: selectedPalette[1],
+                        3: selectedPalette[2]
+                    };
+                    
+                    // Update UI elements
+                    updateCategoryColors();
+                });
+            });
+        }
+        
+        // Update UI elements with current category colors
+        function updateCategoryColors() {
+            // Update category name labels
+            document.getElementById('category1-name').style.color = categoryColors[1];
+            document.getElementById('category2-name').style.color = categoryColors[2];
+            document.getElementById('category3-name').style.color = categoryColors[3];
+            
+            document.getElementById('cat1-display').style.color = categoryColors[1];
+            document.getElementById('cat2-display').style.color = categoryColors[2];
+            document.getElementById('cat3-display').style.color = categoryColors[3];
+            
+            // Update category labels in diagram
+            const cat1Label = document.getElementById('category1-label');
+            const cat2Label = document.getElementById('category2-label');
+            const cat3Label = document.getElementById('category3-label');
+            
+            if (cat1Label) cat1Label.style.color = categoryColors[1];
+            if (cat2Label) cat2Label.style.color = categoryColors[2];
+            if (cat3Label) cat3Label.style.color = categoryColors[3];
+            
+            // Redraw axis labels with new colors
+            const diagram = document.getElementById('diagram');
+            const axisLabels = diagram.querySelectorAll('.axis-label');
+            axisLabels.forEach(label => diagram.removeChild(label));
+            
+            drawAxisLabels(diagram);
+        }
+        
+        // Draw a line between two points
+        function drawLine(container, x1, y1, x2, y2, color, width) {
+            const line = document.createElement('div');
+            line.style.position = 'absolute';
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.width = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)) + 'px';
+            line.style.height = width + 'px';
+            line.style.backgroundColor = color;
+            line.style.transformOrigin = '0 0';
+            line.style.transform = `rotate(${Math.atan2(y2 - y1, x2 - x1)}rad)`;
+            container.appendChild(line);
+        }
+
+        // Draw dotted line
+        function drawDottedLine(container, x1, y1, x2, y2, color, width) {
+            const line = document.createElement('div');
+            line.style.position = 'absolute';
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.width = (x2 - x1) + 'px';
+            line.style.height = width + 'px';
+            line.style.borderTop = `2px dotted ${color}`;
+            line.style.transformOrigin = '0 0';
+            line.style.transform = `rotate(${Math.atan2(y2 - y1, x2 - x1)}rad)`;
+            container.appendChild(line);
+        }
+        
+        // Draw axis labels and percentage markers
+        function drawAxisLabels(container) {
+            // Category 3 (Blue) - Left side
+            createLabel(container, '0%', 270, 90, categoryColors[3]);
+            createLabel(container, '25%', 210, 175, categoryColors[3]);
+            createLabel(container, '50%', 160, 260, categoryColors[3]);
+            createLabel(container, '75%', 115, 339, categoryColors[3]);
+            createLabel(container, '100%', 60, 425, categoryColors[3]);
+            
+            // Category 2 (Green) - Right side
+            createLabel(container, '100%', 310, 90, categoryColors[2]);
+            createLabel(container, '75%', 360, 175, categoryColors[2]);
+            createLabel(container, '50%', 410, 260, categoryColors[2]);
+            createLabel(container, '25%', 465, 339, categoryColors[2]);
+            createLabel(container, '0%', 510, 425, categoryColors[2]);
+
+            // Category 1 (Red) - Bottom
+            createLabel(container, '100%', 485, 460, categoryColors[1]);
+            createLabel(container, '75%', 385, 460, categoryColors[1]);
+            createLabel(container, '50%', 285, 460, categoryColors[1]);
+            createLabel(container, '25%', 185, 460, categoryColors[1]);
+            createLabel(container, '0%', 85, 460, categoryColors[1]);
+            
+            // Category labels (positioned at coordinates)
+            createCategoryLabel(container, 'category1-label', 250, 470, categoryColors[1], 'Category 1');
+            createCategoryLabel(container, 'category2-label', 450, 170, categoryColors[2], 'Category 2');
+            createCategoryLabel(container, 'category3-label', 70, 170, categoryColors[3], 'Category 3'); 
+
+            // Category 2 horizontal lines
+            drawDottedLine(container, 253, 185, 350, 185, categoryColors[2], 2); // 25% line
+            drawDottedLine(container, 200, 273, 400, 273, categoryColors[2], 2); // 50% line
+            drawDottedLine(container, 150, 359, 450, 359, categoryColors[2], 2); // 75% line
+            
+            // Category 3 diagonal lines
+            drawDottedLine(container, A25x, A25y, C75x + C75x - A25x, C75y + C75y - A25y, categoryColors[3], 2); // 25% line
+            drawDottedLine(container, A50x, A50y, 2 * C50x - A50x, 2 * C50y - A50y, categoryColors[3], 2); // 50% line
+            drawDottedLine(container, A75x, A75y, 2 * C25x - A75x, 2 * C25y - A75y, categoryColors[3], 2); // 75% line
+
+            // Category 1 diagonal lines
+            drawDottedLine(container, C25x, C25y, 2 * B75x - C25x, 2 * B75y - C25y, categoryColors[1], 2);
+            drawDottedLine(container, C50x, C50y, 2 * B50x - C50x, 2 * B50y - C50y, categoryColors[1], 2);
+            drawDottedLine(container, C75x, C75y, 2 * B25x - C75x, 2 * B25y - C75y, categoryColors[1], 2);
+        }
+        
+        // Create a percentage label
+        function createLabel(container, text, x, y, color) {
+            const label = document.createElement('div');
+            label.className = 'axis-label';
+            label.textContent = text;
+            label.style.left = x + 'px';
+            label.style.top = y + 'px';
+            label.style.color = color;
+            container.appendChild(label);
+        }
+        
+        // Create a category label (editable)
+        function createCategoryLabel(container, id, x, y, color, defaultValue) {
+            const label = document.createElement('input');
+            label.type = 'text';
+            label.id = id;
+            label.className = 'category-label';
+            label.value = defaultValue;
+            label.style.left = x + 'px';
+            label.style.top = y + 'px';
+            label.style.color = color;
+            container.appendChild(label);
+            
+            // Update display when name changes
+            label.addEventListener('input', function() {
+                document.getElementById('cat' + id.split('-')[0].slice(-1) + '-display').textContent = this.value;
+            });
+        }
+        
+        // Calculate and update the 3rd category count automatically
+        function updateCategory3Count() {
+            const total = parseFloat(document.getElementById('total').value) || 0;
+            const cat1 = parseFloat(document.getElementById('category1-value').value) || 0;
+            const cat2 = parseFloat(document.getElementById('category2-value').value) || 0;
+            const cat3 = total - cat1 - cat2;
+            
+            document.getElementById('category3-value').value = cat3 >= 0 ? cat3 : 0;
+            
+            // Update percentages
+            updatePercentages();
+        }
+        
+        // Plot the data point
+        function plotData() {
+            const total = parseFloat(document.getElementById('total').value);
+            const cat1 = parseFloat(document.getElementById('category1-value').value);
+            const cat2 = parseFloat(document.getElementById('category2-value').value);
+            const cat3 = total - cat1 - cat2;
+            
+            if (isNaN(total) || isNaN(cat1) || isNaN(cat2) || total <= 0) {
+                alert('Please enter valid positive numbers');
+                return;
+            }
+            
+            const color = document.getElementById('point-color').value;
+            const diagram = document.getElementById('diagram');
+            
+            // Calculate coordinates in the ternary diagram
+            const x = Ax + (Cx - Ax) * cat2 / (2 * total) + (Cx - Ax) * cat1 / total - 1;
+            const y = Ay + (By - Ay) * cat2 / total - 1;
+            
+            // Create and position the data point
+            const point = document.createElement('div');
+            point.className = 'data-point';
+            point.style.left = Math.round(x) + 'px';
+            point.style.top = Math.round(y) + 'px';
+            point.style.backgroundColor = color;
+            diagram.appendChild(point);
+            
+            // Update mouse position display names
+            document.getElementById('cat1-display').textContent = document.getElementById('category1-name').value || 'Category 1';
+            document.getElementById('cat2-display').textContent = document.getElementById('category2-name').value || 'Category 2';
+            document.getElementById('cat3-display').textContent = document.getElementById('category3-name').value || 'Category 3';
+        }
+        
+        // Draw confidence region
+        function drawConfidenceRegion() {
+            const total = parseFloat(document.getElementById('total').value);
+            const cat1 = parseFloat(document.getElementById('category1-value').value);
+            const cat2 = parseFloat(document.getElementById('category2-value').value);
+            const color = document.getElementById('point-color').value;
+            const confidenceLevel = document.getElementById('confidence-level').value;
+            
+            if (isNaN(total) || isNaN(cat1) || isNaN(cat2) || total <= 0) {
+                alert('Please plot data first');
+                return;
+            }
+            
+            let cs;
+            switch (confidenceLevel) {
+                case '90': cs = 4.605; break;
+                case '95': cs = 5.991; break;
+                case '99': cs = 9.21; break;
+                default: cs = 5.991;
+            }
+            
+            const diagram = document.getElementById('diagram');
+            
+            for (let i = 1; i < 100; i += 0.5) {
+                for (let j = 1; j < 100 - i; j += 0.5) {
+                    let difi = (cat1/total - i/100) * (cat1/total - i/100) * 100/i;
+                    difi += (cat2/total - j/100) * (cat2/total - j/100) * 100/j;
+                    
+                    let difij0 = cat1/total + cat2/total - (i + j)/100;
+                    difij0 *= difij0;
+                    difij0 *= 100/(100 - i - j);
+                    
+                    const dif = total * (difi + difij0);
+                    
+                    if ((dif < cs) && (dif > (0.85 * cs))) {
+                        const x = Ax + (Cx - Ax) * j/200 + (Cx - Ax) * i/100;
+                        const y = Ay + (By - Ay) * j/100;
+                        
+                        const point = document.createElement('div');
+                        point.className = 'confidence-point';
+                        point.style.left = Math.round(x) + 'px';
+                        point.style.top = Math.round(y) + 'px';
+                        point.style.backgroundColor = color;
+                        diagram.appendChild(point);
+                    }
+                }
+            }
+        }
+        
+        // Clear all data inputs
+        function clearData() {
+            document.getElementById('total').value = '';
+            document.getElementById('category1-name').value = '';
+            document.getElementById('category1-value').value = '';
+            document.getElementById('category2-name').value = '';
+            document.getElementById('category2-value').value = '';
+            document.getElementById('category3-name').value = '';
+            document.getElementById('category3-value').value = '';
+            document.getElementById('category1-percent').textContent = '0%';
+            document.getElementById('category2-percent').textContent = '0%';
+            document.getElementById('category3-percent').textContent = '0%';
+        }
+        
+        // Clear the graph (reset to initial state)
+        function clearGraph() {
+            document.getElementById('diagram').innerHTML = originalDiagramHTML;
+            drawAxisLabels(document.getElementById('diagram'));
+            drawLine(document.getElementById('diagram'), Ax, Ay, Bx, By, 'black', 1);
+            drawLine(document.getElementById('diagram'), Ax, Ay, Cx, Cy, 'black', 1);
+            drawLine(document.getElementById('diagram'), Bx + 1, By, Cx, Cy, 'black', 1);
+        }
+        
+        // Handle mouse movement in the diagram
+        function handleMouseMove(ev) {
+            const diagram = document.getElementById('diagram');
+            const rect = diagram.getBoundingClientRect();
+            const xx = ev.clientX - rect.left;
+            const yy = ev.clientY - rect.top;
+            
+            // Check if mouse is within the triangle
+            if (isPointInTriangle(xx, yy, Ax, Ay, Bx, By, Cx, Cy)) {
+                // Calculate barycentric coordinates
+                const totalArea = area(Ax, Ay, Bx, By, Cx, Cy);
+                const w1 = (xx - ((Ay - yy) / Math.sqrt(3)) - Ax ) / (Cx - Ax); // Category 1 percentage
+                const w2 = (446 - yy) /346; // Category 2 percentage
+                const w3 = 1 - w1 - w2; // Category 3 percentage
+                
+                // Update mouse position display
+                document.getElementById('mouse-cat1').textContent = (w1 * 100).toFixed(1) + '%';
+                document.getElementById('mouse-cat2').textContent = (w2 * 100).toFixed(1) + '%';
+                document.getElementById('mouse-cat3').textContent = (w3 * 100).toFixed(1) + '%';
+            }
+        }
+        
+        // Calculate area of triangle
+        function area(x1, y1, x2, y2, x3, y3) {
+            return Math.abs((x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2))/2);
+        }
+        
+        // Check if point is inside triangle
+        function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
+            // Calculate barycentric coordinates
+            const A = area(x1, y1, x2, y2, x3, y3);
+            const A1 = area(px, py, x2, y2, x3, y3);
+            const A2 = area(x1, y1, px, py, x3, y3);
+            const A3 = area(x1, y1, x2, y2, px, py);
+            
+            // Check if point is inside triangle (with small epsilon for floating point errors)
+            return Math.abs(A - (A1 + A2 + A3)) < 0.1;
+        }
+        
+        // Update percentage displays
+        function updatePercentages() {
+            const total = parseFloat(document.getElementById('total').value) || 0;
+            const cat1 = parseFloat(document.getElementById('category1-value').value) || 0;
+            const cat2 = parseFloat(document.getElementById('category2-value').value) || 0;
+            const cat3 = total - cat1 - cat2;
+            
+            if (total > 0) {
+                document.getElementById('category1-percent').textContent = (cat1 / total * 100).toFixed(1) + '%';
+                document.getElementById('category2-percent').textContent = (cat2 / total * 100).toFixed(1) + '%';
+                document.getElementById('category3-percent').textContent = (cat3 / total * 100).toFixed(1) + '%';
+            } else {
+                document.getElementById('category1-percent').textContent = '0%';
+                document.getElementById('category2-percent').textContent = '0%';
+                document.getElementById('category3-percent').textContent = '0%';
+            }
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            document.getElementById('plot-btn').addEventListener('click', plotData);
+            document.getElementById('clear-btn').addEventListener('click', clearData);
+            document.getElementById('clear-graph-btn').addEventListener('click', clearGraph);
+            document.getElementById('draw-confidence-btn').addEventListener('click', drawConfidenceRegion);
+            
+            document.getElementById('diagram').addEventListener('mousemove', handleMouseMove);
+            
+            // Update category names when changed
+            document.getElementById('category1-name').addEventListener('input', function() {
+                document.getElementById('category1-label').value = this.value;
+                document.getElementById('cat1-display').textContent = this.value || 'Category 1';
+            });
+            
+            document.getElementById('category2-name').addEventListener('input', function() {
+                document.getElementById('category2-label').value = this.value;
+                document.getElementById('cat2-display').textContent = this.value || 'Category 2';
+            });
+            
+            document.getElementById('category3-name').addEventListener('input', function() {
+                document.getElementById('category3-label').value = this.value;
+                document.getElementById('cat3-display').textContent = this.value || 'Category 3';
+            });
+            
+            // Auto-update category 3 count and percentages when inputs change
+            document.getElementById('total').addEventListener('input', updateCategory3Count);
+            document.getElementById('category1-value').addEventListener('input', updateCategory3Count);
+            document.getElementById('category2-value').addEventListener('input', updateCategory3Count);
+        }
+        
+        // Initialize the application when the page loads
+        window.onload = initDiagram;
+    </script>
+</body>
+</html>
