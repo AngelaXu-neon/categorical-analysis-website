@@ -112,6 +112,7 @@
             font-size: 14pt;
             border: none;
             background: transparent;
+            pointer-events: none; /* Make labels non-interactive */
         }
         
         .data-point {
@@ -294,7 +295,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="category1-name" style="color: #FF0000;">1st Category Name:</label>
+                    <label for="category1-name" id="category1-name-label" style="color: #FF0000;">1st Category Name:</label>
                     <input type="text" id="category1-name" style="color: #FF0000; font-weight: bold;">
                     <div class="input-with-percent">
                         <input type="number" id="category1-value" min="0" step="1" placeholder="Count">
@@ -303,7 +304,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="category2-name" style="color: #00CC00;">2nd Category Name:</label>
+                    <label for="category2-name" id="category2-name-label" style="color: #00CC00;">2nd Category Name:</label>
                     <input type="text" id="category2-name" style="color: #00CC00; font-weight: bold;">
                     <div class="input-with-percent">
                         <input type="number" id="category2-value" min="0" step="1" placeholder="Count">
@@ -312,7 +313,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="category3-name" style="color: #0066FF;">3rd Category Name:</label>
+                    <label for="category3-name" id="category3-name-label" style="color: #0066FF;">3rd Category Name:</label>
                     <input type="text" id="category3-name" style="color: #0066FF; font-weight: bold;">
                     <div class="input-with-percent">
                         <input type="number" id="category3-value" min="0" step="1" placeholder="Count" readonly>
@@ -444,15 +445,44 @@
                         3: selectedPalette[2]
                     };
                     
-                    // Update UI elements
+                    // Remove old category labels
+                    removeCategoryLabels();
+                    
+                    // Update UI elements with new colors
                     updateCategoryColors();
+                    
+                    // Redraw labels with new colors
+                    redrawLabels();
                 });
             });
+        }
+        
+        // Remove existing category labels
+        function removeCategoryLabels() {
+            const diagram = document.getElementById('diagram');
+            const labels = diagram.querySelectorAll('.category-label');
+            labels.forEach(label => diagram.removeChild(label));
+        }
+        
+        // Redraw all labels with current colors
+        function redrawLabels() {
+            const diagram = document.getElementById('diagram');
+            
+            // Remove all axis labels
+            const axisLabels = diagram.querySelectorAll('.axis-label');
+            axisLabels.forEach(label => diagram.removeChild(label));
+            
+            // Redraw all labels
+            drawAxisLabels(diagram);
         }
         
         // Update UI elements with current category colors
         function updateCategoryColors() {
             // Update category name labels
+            document.getElementById('category1-name-label').style.color = categoryColors[1];
+            document.getElementById('category2-name-label').style.color = categoryColors[2];
+            document.getElementById('category3-name-label').style.color = categoryColors[3];
+            
             document.getElementById('category1-name').style.color = categoryColors[1];
             document.getElementById('category2-name').style.color = categoryColors[2];
             document.getElementById('category3-name').style.color = categoryColors[3];
@@ -460,22 +490,6 @@
             document.getElementById('cat1-display').style.color = categoryColors[1];
             document.getElementById('cat2-display').style.color = categoryColors[2];
             document.getElementById('cat3-display').style.color = categoryColors[3];
-            
-            // Update category labels in diagram
-            //const cat1Label = document.getElementById('category1-label');
-            //const cat2Label = document.getElementById('category2-label');
-            //const cat3Label = document.getElementById('category3-label');
-            
-            if (cat1Label) cat1Label.style.color = categoryColors[1];
-            if (cat2Label) cat2Label.style.color = categoryColors[2];
-            if (cat3Label) cat3Label.style.color = categoryColors[3];
-            
-            // Redraw axis labels with new colors
-            const diagram = document.getElementById('diagram');
-            const axisLabels = diagram.querySelectorAll('.axis-label');
-            axisLabels.forEach(label => diagram.removeChild(label));
-            
-            drawAxisLabels(diagram);
         }
         
         // Draw a line between two points
@@ -508,31 +522,34 @@
         
         // Draw axis labels and percentage markers
         function drawAxisLabels(container) {
-            // Category 3 (Blue) - Left side
+            // Category 3 - Left side
             createLabel(container, '0%', 270, 90, categoryColors[3]);
             createLabel(container, '25%', 210, 175, categoryColors[3]);
             createLabel(container, '50%', 160, 260, categoryColors[3]);
             createLabel(container, '75%', 115, 339, categoryColors[3]);
             createLabel(container, '100%', 60, 425, categoryColors[3]);
             
-            // Category 2 (Green) - Right side
+            // Category 2 - Right side
             createLabel(container, '100%', 310, 90, categoryColors[2]);
             createLabel(container, '75%', 360, 175, categoryColors[2]);
             createLabel(container, '50%', 410, 260, categoryColors[2]);
             createLabel(container, '25%', 465, 339, categoryColors[2]);
             createLabel(container, '0%', 510, 425, categoryColors[2]);
 
-            // Category 1 (Red) - Bottom
+            // Category 1 - Bottom
             createLabel(container, '100%', 485, 460, categoryColors[1]);
             createLabel(container, '75%', 385, 460, categoryColors[1]);
             createLabel(container, '50%', 285, 460, categoryColors[1]);
             createLabel(container, '25%', 185, 460, categoryColors[1]);
             createLabel(container, '0%', 85, 460, categoryColors[1]);
             
-            // Category labels (positioned at coordinates)
-            createCategoryLabel(container, 'category1-label', 250, 480, categoryColors[1], 'Category 1');
-            createCategoryLabel(container, 'category2-label', 450, 180, categoryColors[2], 'Category 2');
-            createCategoryLabel(container, 'category3-label', 70, 180, categoryColors[3], 'Category 3'); 
+            // Create new category labels (non-editable)
+            createCategoryLabel(container, 'category1-label', 250, 470, categoryColors[1], 
+                              document.getElementById('category1-name').value || 'Category 1');
+            createCategoryLabel(container, 'category2-label', 450, 170, categoryColors[2], 
+                              document.getElementById('category2-name').value || 'Category 2');
+            createCategoryLabel(container, 'category3-label', 70, 170, categoryColors[3], 
+                              document.getElementById('category3-name').value || 'Category 3'); 
 
             // Category 2 horizontal lines
             drawDottedLine(container, 253, 185, 350, 185, categoryColors[2], 2); // 25% line
@@ -561,22 +578,16 @@
             container.appendChild(label);
         }
         
-        // Create a category label (editable)
-        function createCategoryLabel(container, id, x, y, color, defaultValue) {
-            const label = document.createElement('input');
-            label.type = 'text';
+        // Create a category label (non-editable)
+        function createCategoryLabel(container, id, x, y, color, text) {
+            const label = document.createElement('div');
             label.id = id;
             label.className = 'category-label';
-            label.value = defaultValue;
+            label.textContent = text;
             label.style.left = x + 'px';
             label.style.top = y + 'px';
             label.style.color = color;
             container.appendChild(label);
-            
-            // Update display when name changes
-            label.addEventListener('input', function() {
-                document.getElementById('cat' + id.split('-')[0].slice(-1) + '-display').textContent = this.value;
-            });
         }
         
         // Calculate and update the 3rd category count automatically
@@ -623,6 +634,20 @@
             document.getElementById('cat1-display').textContent = document.getElementById('category1-name').value || 'Category 1';
             document.getElementById('cat2-display').textContent = document.getElementById('category2-name').value || 'Category 2';
             document.getElementById('cat3-display').textContent = document.getElementById('category3-name').value || 'Category 3';
+            
+            // Update category labels in diagram
+            updateDiagramCategoryLabels();
+        }
+        
+        // Update category labels in diagram with current names
+        function updateDiagramCategoryLabels() {
+            const cat1Label = document.getElementById('category1-label');
+            const cat2Label = document.getElementById('category2-label');
+            const cat3Label = document.getElementById('category3-label');
+            
+            if (cat1Label) cat1Label.textContent = document.getElementById('category1-name').value || 'Category 1';
+            if (cat2Label) cat2Label.textContent = document.getElementById('category2-name').value || 'Category 2';
+            if (cat3Label) cat3Label.textContent = document.getElementById('category3-name').value || 'Category 3';
         }
         
         // Draw confidence region
@@ -765,18 +790,18 @@
             
             // Update category names when changed
             document.getElementById('category1-name').addEventListener('input', function() {
-                document.getElementById('category1-label').value = this.value;
                 document.getElementById('cat1-display').textContent = this.value || 'Category 1';
+                updateDiagramCategoryLabels();
             });
             
             document.getElementById('category2-name').addEventListener('input', function() {
-                document.getElementById('category2-label').value = this.value;
                 document.getElementById('cat2-display').textContent = this.value || 'Category 2';
+                updateDiagramCategoryLabels();
             });
             
             document.getElementById('category3-name').addEventListener('input', function() {
-                document.getElementById('category3-label').value = this.value;
                 document.getElementById('cat3-display').textContent = this.value || 'Category 3';
+                updateDiagramCategoryLabels();
             });
             
             // Auto-update category 3 count and percentages when inputs change
