@@ -462,9 +462,9 @@
             document.getElementById('cat3-display').style.color = categoryColors[3];
             
             // Update category labels in diagram
-            const cat1Label = document.getElementById('category1-label');
-            const cat2Label = document.getElementById('category2-label');
-            const cat3Label = document.getElementById('category3-label');
+            //const cat1Label = document.getElementById('category1-label');
+            //const cat2Label = document.getElementById('category2-label');
+            //const cat3Label = document.getElementById('category3-label');
             
             if (cat1Label) cat1Label.style.color = categoryColors[1];
             if (cat2Label) cat2Label.style.color = categoryColors[2];
@@ -530,9 +530,9 @@
             createLabel(container, '0%', 85, 460, categoryColors[1]);
             
             // Category labels (positioned at coordinates)
-            createCategoryLabel(container, 'category1-label', 250, 470, categoryColors[1], 'Category 1');
-            createCategoryLabel(container, 'category2-label', 450, 170, categoryColors[2], 'Category 2');
-            createCategoryLabel(container, 'category3-label', 70, 170, categoryColors[3], 'Category 3'); 
+            createCategoryLabel(container, 'category1-label', 250, 480, categoryColors[1], 'Category 1');
+            createCategoryLabel(container, 'category2-label', 450, 180, categoryColors[2], 'Category 2');
+            createCategoryLabel(container, 'category3-label', 70, 180, categoryColors[3], 'Category 3'); 
 
             // Category 2 horizontal lines
             drawDottedLine(container, 253, 185, 350, 185, categoryColors[2], 2); // 25% line
